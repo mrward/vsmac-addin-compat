@@ -74,6 +74,11 @@ class Program
             CheckAddinMPackFileCompat(addinMPackFileName);
         }
 
+        foreach (string addinMPackDirectory in options!.AddinMPackDirectories)
+        {
+            CheckAddinMPackDirectoryCompat(addinMPackDirectory);
+        }
+
         if (FailedCount > 0)
         {
             return 1;
@@ -83,15 +88,21 @@ class Program
 
     static void CheckAddinDirectoryCompat(string addinDirectory)
     {
-        string addinIdentifier = addinDirectory;
+        string addinIdentifier = GetAddinIdentifier(addinDirectory);
+        CheckAddinDirectoryCompatCore(addinDirectory, addinIdentifier);
+    }
 
-        string relativePath = Path.GetRelativePath(Directory.GetCurrentDirectory(), addinDirectory);
+    static string GetAddinIdentifier(string addinDirectoryOrFileName)
+    {
+        string addinIdentifier = addinDirectoryOrFileName;
+
+        string relativePath = Path.GetRelativePath(Directory.GetCurrentDirectory(), addinDirectoryOrFileName);
         if (!relativePath.StartsWith("..", StringComparison.Ordinal))
         {
             addinIdentifier = relativePath;
         }
 
-        CheckAddinDirectoryCompatCore(addinDirectory, addinIdentifier);
+        return addinIdentifier;
     }
 
     static void CheckAddinDirectoryCompatCore(string addinDirectory, string addinIdentifier)
@@ -122,9 +133,27 @@ class Program
         using var mpackExtractor = new AddinMPackExtractor(addinMPackFileName);
         mpackExtractor.Extract();
 
+        string addinIdentifier = GetAddinIdentifier(addinMPackFileName);
+
         CheckAddinDirectoryCompatCore(
             mpackExtractor.AddinDirectory!,
             addinIdentifier: addinMPackFileName);
+    }
+
+    static void CheckAddinMPackDirectoryCompat(string addinMPackDirectory)
+    {
+        int mpackFilesChecked = 0;
+
+        foreach (string addinMPackFileName in Directory.GetFiles(addinMPackDirectory, "*.mpack", SearchOption.AllDirectories))
+        {
+            ++mpackFilesChecked;
+            CheckAddinMPackFileCompat(addinMPackFileName);
+        }
+
+        if (mpackFilesChecked == 0)
+        {
+            Console.WriteLine("WARN: No .mpack files found in specified directories");
+        }
     }
 }
 
