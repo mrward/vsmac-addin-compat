@@ -28,11 +28,13 @@ namespace Microsoft.VisualStudioMac.AddinCompatibility;
 
 class Program
 {
+    static CommandLineOptions? options;
+
     static int Main(string[] args)
     {
         try
         {
-            var options = CommandLineOptions.Parse(args);
+            options = CommandLineOptions.Parse(args);
             if (options.HasError)
             {
                 options.ShowError();
@@ -45,13 +47,50 @@ class Program
                 return 0;
             }
 
+            Run();
+
             return 0;
+        }
+        catch (UserException ex)
+        {
+            Console.WriteLine("ERROR: {0}", ex.Message);
+            return -1;
         }
         catch (Exception ex)
         {
-            Console.WriteLine("Error: {0}", ex);
+            Console.WriteLine("ERROR: {0}", ex);
             return -1;
         }
+    }
+
+    static void Run()
+    {
+        foreach (string addinDirectory in options!.AddinDirectories)
+        {
+            CheckAddinDirectoryCompat(addinDirectory);
+        }
+    }
+
+    static void CheckAddinDirectoryCompat(string addinDirectory)
+    {
+        Console.WriteLine("Checking Addin compat: '{0}'", addinDirectory);
+
+        using var checker = new AddinCompatChecker();
+        checker.AddinDirectory = addinDirectory;
+        checker.VisualStudioForMacDirectory = options!.VSMacAppBundle;
+
+        bool result = checker.Check();
+
+        if (result)
+        {
+            Console.WriteLine("Passed: Addin compat: '{0}'", addinDirectory);
+        }
+        else
+        {
+            Console.WriteLine("Failed: Addin compat: '{0}'", addinDirectory);
+        }
+
+        Console.WriteLine();
     }
 }
 

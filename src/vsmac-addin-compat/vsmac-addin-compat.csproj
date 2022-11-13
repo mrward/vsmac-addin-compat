@@ -6,14 +6,17 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <PackAsTool>true</PackAsTool>
-    <ToolCommandName>botsay</ToolCommandName>
-    <PackageOutputPath>../../nupkg</PackageOutputPath>
+    <ToolCommandName>vsmac-addin-compat</ToolCommandName>
+    <PackageOutputPath>..\..\nupkg</PackageOutputPath>
     <Version>0.1.0</Version>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <OutputPath>..\..\bin\Debug</OutputPath>
+    <OutputPath>..\..\bin</OutputPath>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Mono.Options" Version="6.12.0.148" />
+    <PackageReference Include="BinaryCompatChecker" Version="1.0.28" GeneratePackagePath="true" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="BinaryCompatChecker" HintPath="$(PkgBinaryCompatChecker)\tools\BinaryCompatChecker.dll" />
+    <Reference Include="Mono.Cecil" HintPath="$(PkgBinaryCompatChecker)\tools\Mono.Cecil.dll" />
   </ItemGroup>
 </Project>
