@@ -52,6 +52,8 @@ class AddinCompatChecker : IDisposable
 
         Checker.ReportIntPtrConstructors = true;
         Checker.ReportVersionMismatch = false;
+        Checker.ReportEmbeddedInteropTypes = false;
+        Checker.ReportVersionMismatch = false;
 
         var checker = new Checker();
 
