@@ -13,7 +13,6 @@ dotnet vsmac-addin-compat --help
 dotnet vsmac-addin-compat --vsmac-app "/Applications/Visual Studio.app" --addin-dir ./addin
 dotnet vsmac-addin-compat --vsmac-preview --addin-dir ./addin
 dotnet vsmac-addin-compat --addin-dir ./addin
-dotnet vsmac-addin-compat --addin MyExtension.mpack
-dotnet vsmac-addin-compat --addin *.mpack
+dotnet vsmac-addin-compat --mpack MyExtension.mpack
 dotnet vsmac-addin-compat
 ```

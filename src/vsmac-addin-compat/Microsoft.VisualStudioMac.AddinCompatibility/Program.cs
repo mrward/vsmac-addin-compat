@@ -29,6 +29,7 @@ namespace Microsoft.VisualStudioMac.AddinCompatibility;
 class Program
 {
     static CommandLineOptions? options;
+    static int FailedCount;
 
     static int Main(string[] args)
     {
@@ -47,9 +48,7 @@ class Program
                 return 0;
             }
 
-            Run();
-
-            return 0;
+            return Run();
         }
         catch (UserException ex)
         {
@@ -63,17 +62,41 @@ class Program
         }
     }
 
-    static void Run()
+    static int Run()
     {
         foreach (string addinDirectory in options!.AddinDirectories)
         {
             CheckAddinDirectoryCompat(addinDirectory);
         }
+
+        foreach (string addinMPackFileName in options!.AddinMPackFileNames)
+        {
+            CheckAddinMPackFileCompat(addinMPackFileName);
+        }
+
+        if (FailedCount > 0)
+        {
+            return 1;
+        }
+        return 0;
     }
 
     static void CheckAddinDirectoryCompat(string addinDirectory)
     {
-        Console.WriteLine("Checking Addin compat: '{0}'", addinDirectory);
+        string addinIdentifier = addinDirectory;
+
+        string relativePath = Path.GetRelativePath(Directory.GetCurrentDirectory(), addinDirectory);
+        if (!relativePath.StartsWith("..", StringComparison.Ordinal))
+        {
+            addinIdentifier = relativePath;
+        }
+
+        CheckAddinDirectoryCompatCore(addinDirectory, addinIdentifier);
+    }
+
+    static void CheckAddinDirectoryCompatCore(string addinDirectory, string addinIdentifier)
+    {
+        Console.WriteLine("Checking Addin compat: '{0}'", addinIdentifier);
 
         using var checker = new AddinCompatChecker();
         checker.AddinDirectory = addinDirectory;
@@ -83,14 +106,25 @@ class Program
 
         if (result)
         {
-            Console.WriteLine("Passed: Addin compat: '{0}'", addinDirectory);
+            Console.WriteLine("Passed: Addin compat: '{0}'", addinIdentifier);
         }
         else
         {
-            Console.WriteLine("Failed: Addin compat: '{0}'", addinDirectory);
+            Console.WriteLine("Failed: Addin compat: '{0}'", addinIdentifier);
+            FailedCount++;
         }
 
         Console.WriteLine();
+    }
+
+    static void CheckAddinMPackFileCompat(string addinMPackFileName)
+    {
+        using var mpackExtractor = new AddinMPackExtractor(addinMPackFileName);
+        mpackExtractor.Extract();
+
+        CheckAddinDirectoryCompatCore(
+            mpackExtractor.AddinDirectory!,
+            addinIdentifier: addinMPackFileName);
     }
 }
 

@@ -37,14 +37,14 @@ class CommandLineOptions
             { "h|?|help", "Show help", h => Help = true },
             { "vsmac-app=", "Visual Studio for Mac app bundle directory", app => VSMacAppBundle = app },
             { "addin-dir=", "Directory containing addin files", directory => AddinDirectories.Add(directory) },
-            { "addin=", "Addin .mpack filename", fileName => AddinFileNames.Add(fileName) },
+            { "mpack=", "Addin .mpack filename", fileName => AddinMPackFileNames.Add(fileName) },
         };
     }
 
     public bool Help { get; private set; }
     public string? VSMacAppBundle { get; private set; }
     public List<string> AddinDirectories { get; private set; } = new List<string>();
-    public List<string> AddinFileNames { get; private set; } = new List<string>();
+    public List<string> AddinMPackFileNames { get; private set; } = new List<string>();
     public List<string> RemainingArgs { get; private set; } = new List<string>();
     public Exception? Error { get; private set; }
 
@@ -106,7 +106,7 @@ class CommandLineOptions
     {
         ValidateAddinDirectories();
         ValidateVSMacDirectory();
-        ValidateAddinFileNames();
+        ValidateAddinMPackFileNames();
     }
 
     void ValidateAddinDirectories()
@@ -162,18 +162,18 @@ class CommandLineOptions
         return Path.GetFullPath(path);
     }
 
-    void ValidateAddinFileNames()
+    void ValidateAddinMPackFileNames()
     {
-        for (int i = 0; i < AddinFileNames.Count; ++i)
+        for (int i = 0; i < AddinMPackFileNames.Count; ++i)
         {
-            string? fileName = AddinFileNames[i];
+            string? fileName = AddinMPackFileNames[i];
             if (fileName is null)
             {
                 continue;
             }
 
             fileName = GetFullPath(fileName);
-            AddinFileNames[i] = fileName!;
+            AddinMPackFileNames[i] = fileName!;
 
             if (!File.Exists(fileName))
             {
