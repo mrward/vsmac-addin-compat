@@ -39,11 +39,13 @@ class CommandLineOptions
             { "addin-dir=", "Directory containing addin files", directory => AddinDirectories.Add(directory) },
             { "mpack=", "Addin .mpack filename", fileName => AddinMPackFileNames.Add(fileName) },
             { "mpack-dir=", "Directory containing .mpack filename", directory => AddinMPackDirectories.Add(directory) },
+            { "vsmac-preview", "Check 'Visual Studio (Preview).app'", preview => UseVSMacPreview = true },
         };
     }
 
     public bool Help { get; private set; }
     public string? VSMacAppBundle { get; private set; }
+    public bool UseVSMacPreview { get; private set; }
     public List<string> AddinDirectories { get; private set; } = new List<string>();
     public List<string> AddinMPackFileNames { get; private set; } = new List<string>();
     public List<string> AddinMPackDirectories { get; private set; } = new List<string>();
@@ -110,6 +112,11 @@ class CommandLineOptions
         ValidateAddinDirectories(AddinMPackDirectories);
         ValidateAddinMPackFileNames();
         ValidateVSMacDirectory();
+
+        if (string.IsNullOrEmpty(VSMacAppBundle))
+        {
+            VSMacAppBundle = FindVSMacAppBundle();
+        }
     }
 
     void ValidateAddinDirectories(List<string> directories)
@@ -183,6 +190,17 @@ class CommandLineOptions
                 throw new UserException($"Addin file does not exist '{fileName}'");
             }
         }
+    }
+
+    string FindVSMacAppBundle()
+    {
+        string? appBundlePath = VSMacAppBundleFinder.GetAppBundlePath(UseVSMacPreview);
+        if (!string.IsNullOrEmpty(appBundlePath))
+        {
+            return appBundlePath;
+        }
+
+        throw new UserException("Visual Studio for Mac application not found");
     }
 }
 

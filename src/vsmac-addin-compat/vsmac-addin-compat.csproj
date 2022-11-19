@@ -10,6 +10,7 @@
     <PackageOutputPath>..\..\nupkg</PackageOutputPath>
     <Version>0.1.0</Version>
     <OutputPath>..\..\bin</OutputPath>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Mono.Options" Version="6.12.0.148" />
