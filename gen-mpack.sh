@@ -1,0 +1,1 @@
+"/Applications/Visual Studio.app/Contents/MacOS/vstool" setup pack $PWD/bin/addin/ExtensionCompatibilityChecker.dll -d:$PWD

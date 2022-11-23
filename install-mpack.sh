@@ -1,0 +1,1 @@
+"/Applications/Visual Studio (Preview).app/Contents/MacOS/vstool" setup install "$PWD/Microsoft.VisualStudioMac.ExtensionCompatibilityChecker.0.1.mpack"
