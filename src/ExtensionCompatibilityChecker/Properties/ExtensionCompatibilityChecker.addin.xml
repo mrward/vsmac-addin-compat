@@ -5,6 +5,7 @@
 		<Import file="Mono.Cecil.dll" />
 		<Import file="Mono.Options.dll" />
 		<Import file="vsmac-addin-compat.dll" />
+		<Import file="vsmac-addin-compat.runtimeconfig.json" />
 	</Runtime>
 
 	<Extension path="/MonoDevelop/Ide/StartupHandlers">
