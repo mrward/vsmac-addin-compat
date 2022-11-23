@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="VisualStudioMac.References.props" />
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Microsoft.VisualStudioMac.ExtensionCompatibility</RootNamespace>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <OutputPath>..\..\bin\addin</OutputPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Properties\ExtensionCompatibilityChecker.addin.xml">
+      <LogicalName>ExtensionCompatibilityChecker.addin.xml</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\vsmac-addin-compat\vsmac-addin-compat.csproj" ReferenceOutputAssembly="False" />
+  </ItemGroup>
+  <Target Name="ExtensibilityCompatibilityCheckerAfterBuild" AfterTargets="Build">
+    <ItemGroup>
+      <VSMacAddinCompatFiles Include="$(MSBuildProjectDirectory)\..\..\bin\net7.0\*.dll" />
+    </ItemGroup>
+    <Copy SourceFiles="@(VSMacAddinCompatFiles)" DestinationFolder="$(OutputPath)" />
+  </Target>
+</Project>
