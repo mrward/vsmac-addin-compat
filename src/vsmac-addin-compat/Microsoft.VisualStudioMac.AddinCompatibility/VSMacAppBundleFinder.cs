@@ -62,7 +62,7 @@ namespace Microsoft.VisualStudioMac.AddinCompatibility
 
             if (appBundlesInApplications.Count() == 1)
             {
-                Console.WriteLine("Multiple Visual Studio for Mac applications found using '{appBundlePath}'");
+                Console.WriteLine($"Multiple Visual Studio for Mac applications found using '{appBundlePath}'");
 
                 return appBundlePath;
             }
