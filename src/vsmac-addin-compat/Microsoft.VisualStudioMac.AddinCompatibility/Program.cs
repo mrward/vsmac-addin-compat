@@ -64,17 +64,22 @@ class Program
 
     static int Run()
     {
-        foreach (string addinDirectory in options!.AddinDirectories)
+        if (!string.IsNullOrEmpty(options!.VSMacBaseLineFileName))
+        {
+            GenerateVSMacBaseLine(options.VSMacBaseLineFileName);
+        }
+
+        foreach (string addinDirectory in options.AddinDirectories)
         {
             CheckAddinDirectoryCompat(addinDirectory);
         }
 
-        foreach (string addinMPackFileName in options!.AddinMPackFileNames)
+        foreach (string addinMPackFileName in options.AddinMPackFileNames)
         {
             CheckAddinMPackFileCompat(addinMPackFileName);
         }
 
-        foreach (string addinMPackDirectory in options!.AddinMPackDirectories)
+        foreach (string addinMPackDirectory in options.AddinMPackDirectories)
         {
             CheckAddinMPackDirectoryCompat(addinMPackDirectory);
         }
@@ -84,6 +89,20 @@ class Program
             return 1;
         }
         return 0;
+    }
+
+    static void GenerateVSMacBaseLine(string? baseLineFileName)
+    {
+        Console.WriteLine("Generating baseline report for Visual Studio for Mac");
+
+        using var checker = new AddinCompatChecker();
+        checker.VisualStudioForMacDirectory = options!.VSMacAppBundle;
+        checker.ReportFileName = options.VSMacBaseLineFileName;
+
+        checker.Check();
+
+        Console.WriteLine("Baseline report generated");
+        Console.WriteLine();
     }
 
     static void CheckAddinDirectoryCompat(string addinDirectory)

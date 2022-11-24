@@ -34,21 +34,29 @@ class AddinCompatChecker : IDisposable
 
     public string? VisualStudioForMacDirectory { get; set; }
     public string? AddinDirectory { get; set; }
+    public string? ReportFileName { get; set; }
 
     public bool Check()
     {
         ArgumentNullException.ThrowIfNull(VisualStudioForMacDirectory);
-        ArgumentNullException.ThrowIfNull(AddinDirectory);
 
         string? configFile = null;
 
         IEnumerable<string> allFiles = Checker.GetFiles(VisualStudioForMacDirectory, configFile, out _);
+        IEnumerable<string> startFiles = allFiles;
 
-        IEnumerable<string> allAddinFiles = Checker.GetFiles(AddinDirectory, configFile, out List<string>? addinStartFiles);
+        if (!string.IsNullOrEmpty(AddinDirectory))
+        {
+            IEnumerable<string> allAddinFiles = Checker.GetFiles(
+                AddinDirectory,
+                configFile,
+                out List<string>? addinStartFiles);
 
-        allFiles = allFiles.Concat(allAddinFiles);
+            allFiles = allFiles.Concat(allAddinFiles);
+            startFiles = allAddinFiles;
+        }
 
-        reportFile = new TemporaryReportFile();
+        ConfigureReportFileName();
 
         Checker.ReportIntPtrConstructors = true;
         Checker.ReportVersionMismatch = false;
@@ -60,10 +68,27 @@ class AddinCompatChecker : IDisposable
         bool success = checker.Check(
             VisualStudioForMacDirectory,
             allFiles,
-            addinStartFiles,
-            reportFile.FileName);
+            startFiles,
+            ReportFileName);
 
         return success;
+    }
+
+    void ConfigureReportFileName()
+    {
+        if (string.IsNullOrEmpty(ReportFileName))
+        {
+            reportFile = new TemporaryReportFile();
+            ReportFileName = reportFile.FileName;
+        }
+        else
+        {
+            string? directory = Path.GetDirectoryName(ReportFileName);
+            if (directory is not null)
+            {
+                Directory.CreateDirectory(directory);
+            }
+        }
     }
 
     public void Dispose()
@@ -74,9 +99,10 @@ class AddinCompatChecker : IDisposable
 
     public string GetReportText()
     {
-        if (reportFile is not null)
+        if (ReportFileName is not null &&
+            File.Exists(ReportFileName))
         {
-            return File.ReadAllText(reportFile.FileName);
+            return File.ReadAllText(ReportFileName);
         }
 
         return string.Empty;

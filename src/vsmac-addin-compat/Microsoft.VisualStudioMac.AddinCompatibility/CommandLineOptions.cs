@@ -40,12 +40,14 @@ class CommandLineOptions
             { "mpack=", "Addin .mpack filename", fileName => AddinMPackFileNames.Add(fileName) },
             { "mpack-dir=", "Directory containing .mpack filename", directory => AddinMPackDirectories.Add(directory) },
             { "vsmac-preview", "Check 'Visual Studio (Preview).app'", preview => UseVSMacPreview = true },
+            { "vsmac-baseline-file=", "Generate baseline report for Visual Studio for Mac app bundle", fileName => VSMacBaseLineFileName = fileName },
         };
     }
 
     public bool Help { get; private set; }
     public string? VSMacAppBundle { get; private set; }
     public bool UseVSMacPreview { get; private set; }
+    public string? VSMacBaseLineFileName { get; private set; }
     public List<string> AddinDirectories { get; private set; } = new List<string>();
     public List<string> AddinMPackFileNames { get; private set; } = new List<string>();
     public List<string> AddinMPackDirectories { get; private set; } = new List<string>();
@@ -117,6 +119,8 @@ class CommandLineOptions
         {
             VSMacAppBundle = FindVSMacAppBundle();
         }
+
+        VSMacBaseLineFileName = GetFullPath(VSMacBaseLineFileName);
     }
 
     void ValidateAddinDirectories(List<string> directories)

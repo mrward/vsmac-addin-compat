@@ -15,5 +15,6 @@ dotnet vsmac-addin-compat --vsmac-preview --addin-dir ./addin
 dotnet vsmac-addin-compat --addin-dir ./addin
 dotnet vsmac-addin-compat --mpack MyExtension.mpack
 dotnet vsmac-addin-compat --mpack-dir ./addins
+dotnet vsmac-addin-compat --vsmac-baseline-file ./report/baseline.txt
 dotnet vsmac-addin-compat
 ```
