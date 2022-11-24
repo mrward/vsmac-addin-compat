@@ -29,6 +29,7 @@ using Microsoft.VisualStudio.Threading;
 using Mono.Addins;
 using MonoDevelop.Core;
 using MonoDevelop.Core.Execution;
+using MonoDevelop.Core.PooledObjects;
 using MonoDevelop.Ide;
 using MonoDevelop.Ide.Gui;
 
@@ -52,7 +53,7 @@ class CompatibilityCheckRunner
 
         var wrappedConsole = new CompatibilityCheckOperationConsole(console);
 
-        int failureCount = 0;
+        var incompatibleAddins = new List<Addin>();
         bool reportFailure = false;
 
         foreach (Addin addin in userAddins)
@@ -62,7 +63,7 @@ class CompatibilityCheckRunner
                 int exitCode = await RunCheckAsync(addin, progressMonitor, wrappedConsole);
                 if (exitCode == 1)
                 {
-                    failureCount++;
+                    incompatibleAddins.Add(addin);
                 }
                 else if (exitCode == 0)
                 {
@@ -81,9 +82,9 @@ class CompatibilityCheckRunner
         }
 
         string? errorMessage = null;
-        if (failureCount > 0)
+        if (incompatibleAddins.Count > 0)
         {
-            errorMessage = GettextCatalog.GetString("{0} extensions are not compatible", failureCount);
+            errorMessage = GetIncompatibleAddinInfo(incompatibleAddins);
         }
         else if (reportFailure)
         {
@@ -154,6 +155,26 @@ class CompatibilityCheckRunner
         await operation.Task;
 
         return operation.ExitCode;
+    }
+
+    string GetIncompatibleAddinInfo(List<Addin> incompatibleAddins)
+    {
+        using var builder = PooledStringBuilder.GetInstance();
+
+        string message = GettextCatalog.GetPluralString(
+            "{0} extension is not compatible:",
+            "{0} extensions are not compatible:",
+            incompatibleAddins.Count,
+            incompatibleAddins.Count);
+
+        builder.AppendLine(message);
+
+        foreach (Addin addin in incompatibleAddins)
+        {
+            builder.AppendLine($"    {addin.Name} {addin.Version}");
+        }
+
+        return builder.ToStringAndFree();
     }
 }
 
