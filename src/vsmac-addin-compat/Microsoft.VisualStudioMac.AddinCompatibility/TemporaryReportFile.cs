@@ -33,7 +33,12 @@ class TemporaryReportFile : IDisposable
     public TemporaryReportFile()
     {
         directory = CreateTempDirectory();
+
         FileName = Path.Combine(directory, "report.txt");
+
+        // Need to create the report file to have the binary compat checker report an
+        // error when diffing the file with the new compat problems found.
+        File.WriteAllText(FileName, string.Empty);
     }
 
     public string FileName { get; }
