@@ -130,6 +130,7 @@ class Program
 
         using var checker = new AddinCompatChecker();
         checker.AddinDirectory = addinDirectory;
+        checker.ReportFileName = options!.AddinBaseLineFileName;
         checker.VisualStudioForMacDirectory = options!.VSMacAppBundle;
 
         bool result = checker.Check();
