@@ -28,9 +28,12 @@ namespace Microsoft.VisualStudioMac.AddinCompatibility;
 
 class TemporaryReportFile : IDisposable
 {
+    readonly string directory;
+
     public TemporaryReportFile()
     {
-        FileName = Path.GetTempFileName();
+        directory = CreateTempDirectory();
+        FileName = Path.Combine(directory, "report.txt");
     }
 
     public string FileName { get; }
@@ -39,12 +42,32 @@ class TemporaryReportFile : IDisposable
     {
         try
         {
-            File.Delete(FileName);
+            Directory.Delete(directory, recursive: true);
         }
         catch
         {
             // Ignore
         }
+    }
+
+    static string CreateTempDirectory()
+    {
+        var random = new Random();
+        string directory;
+
+        while (true)
+        {
+            directory = Path.Combine(Path.GetTempPath(), "vsmac-addin-compat-" + random.Next());
+
+            if (!Directory.Exists(directory))
+            {
+                break;
+            }
+        }
+
+        Directory.CreateDirectory(directory);
+
+        return directory;
     }
 }
 
