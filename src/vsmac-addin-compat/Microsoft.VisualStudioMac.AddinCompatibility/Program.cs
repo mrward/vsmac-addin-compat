@@ -30,6 +30,7 @@ class Program
 {
     static CommandLineOptions? options;
     static int FailedCount;
+    static string[]? baseLine;
 
     static int Main(string[] args)
     {
@@ -64,9 +65,17 @@ class Program
 
     static int Run()
     {
-        if (!string.IsNullOrEmpty(options!.VSMacBaseLineFileName))
+        if (options!.GenerateVSMacBaseLine)
         {
             GenerateVSMacBaseLine(options.VSMacBaseLineFileName);
+        }
+        else if (options.VSMacBaseLineFileName is not null)
+        {
+            baseLine = File.ReadAllLines(options.VSMacBaseLineFileName);
+        }
+        else
+        {
+            GenerateVSMacBaseLine();
         }
 
         foreach (string addinDirectory in options.AddinDirectories)
@@ -91,17 +100,26 @@ class Program
         return 0;
     }
 
+    static void GenerateVSMacBaseLine()
+    {
+        using var vsmacBaseLineFileName = new TemporaryReportFile();
+
+        GenerateVSMacBaseLine(vsmacBaseLineFileName.FileName);
+    }
+
     static void GenerateVSMacBaseLine(string? baseLineFileName)
     {
-        Console.WriteLine("Generating baseline report for Visual Studio for Mac");
+        Console.WriteLine("Generating baseline for Visual Studio for Mac");
 
         using var checker = new AddinCompatChecker();
-        checker.VisualStudioForMacDirectory = options!.VSMacAppBundle;
+        checker.VSMacDirectory = options!.VSMacAppBundle;
         checker.ReportFileName = options.VSMacBaseLineFileName;
 
         checker.Check();
 
-        Console.WriteLine("Baseline report generated");
+        baseLine = checker.GetReportLines();
+
+        Console.WriteLine("Baseline generated");
         Console.WriteLine();
     }
 
@@ -130,8 +148,8 @@ class Program
 
         using var checker = new AddinCompatChecker();
         checker.AddinDirectory = addinDirectory;
-        checker.ReportFileName = options!.AddinBaseLineFileName;
-        checker.VisualStudioForMacDirectory = options!.VSMacAppBundle;
+        checker.VSMacDirectory = options!.VSMacAppBundle;
+        checker.BaseLine = baseLine;
 
         bool result = checker.Check();
 

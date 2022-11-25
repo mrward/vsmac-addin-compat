@@ -1,10 +1,11 @@
 ﻿//
-// TemporaryReportFile.cs
+// BaseLineChecker.cs
+// Based on https://github.com/KirillOsenkov/MetadataTools/blob/main/src/BinaryCompatChecker/Program.cs
 //
 // Author:
-//       Matt Ward <matt.ward@microsoft.com>
+//       Kirill Osenkov <kirill.osenkov@microsoft.com>
 //
-// Copyright (c) 2022 Microsoft
+// Copyright (c) 2017 Kirill Osenkov
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -24,51 +25,53 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+using System;
+
 namespace Microsoft.VisualStudioMac.AddinCompatibility;
 
-class TemporaryReportFile : IDisposable
+static class BaseLineChecker
 {
-    readonly string directory;
-
-    public TemporaryReportFile()
+    public static bool Check(string[] oldBaseLine, string[] newBaseLine)
     {
-        directory = CreateTempDirectory();
+        if (!newBaseLine.Any())
+        {
+            return true;
+        }
 
-        FileName = Path.Combine(directory, "report.txt");
+        if (Enumerable.SequenceEqual(oldBaseLine, newBaseLine))
+        {
+            return true;
+        }
+
+        return OutputDiff(oldBaseLine, newBaseLine);
     }
 
-    public string FileName { get; }
-
-    public void Dispose()
+    static void OutputError(string text)
     {
-        try
-        {
-            Directory.Delete(directory, recursive: true);
-        }
-        catch
-        {
-            // Ignore
-        }
+        Console.Error.WriteLine(text);
     }
 
-    static string CreateTempDirectory()
+    static bool OutputDiff(IEnumerable<string> oldBaseLine, IEnumerable<string> newBaseLine)
     {
-        var random = new Random();
-        string directory;
+        IEnumerable<string> added = newBaseLine.Except(oldBaseLine);
 
-        while (true)
+        if (added.Any())
         {
-            directory = Path.Combine(Path.GetTempPath(), "vsmac-addin-compat-" + random.Next());
+            OutputError("The current assembly binary compatibility report is different from the baseline.");
 
-            if (!Directory.Exists(directory))
+            OutputError("=================================");
+            OutputError("These actual lines are new:");
+            foreach (var addedLine in added)
             {
-                break;
+                OutputError(addedLine);
             }
+
+            OutputError("=================================");
+
+            return false;
         }
 
-        Directory.CreateDirectory(directory);
-
-        return directory;
+        return true;
     }
 }
 

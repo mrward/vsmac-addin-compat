@@ -40,16 +40,16 @@ class CommandLineOptions
             { "mpack=", "Addin .mpack filename", fileName => AddinMPackFileNames.Add(fileName) },
             { "mpack-dir=", "Directory containing .mpack filename", directory => AddinMPackDirectories.Add(directory) },
             { "vsmac-preview", "Check 'Visual Studio (Preview).app'", preview => UseVSMacPreview = true },
-            { "vsmac-baseline-file=", "Generate baseline report for Visual Studio for Mac app bundle", fileName => VSMacBaseLineFileName = fileName },
-            { "addin-baseline-file=", "Generate baseline report for addin", fileName => AddinBaseLineFileName = fileName },
+            { "vsmac-baseline-file=", "Baseline report file for Visual Studio for Mac app bundle", fileName => VSMacBaseLineFileName = fileName },
+            { "generate-vsmac-baseline", "Generate baseline report for Visual Studio for Mac app bundle", arg => GenerateVSMacBaseLine = true },
         };
     }
 
     public bool Help { get; private set; }
     public string? VSMacAppBundle { get; private set; }
     public bool UseVSMacPreview { get; private set; }
-    public string? VSMacBaseLineFileName { get; private set; }
-    public string? AddinBaseLineFileName { get; private set; }
+    public bool GenerateVSMacBaseLine { get; private set; }
+    public string? VSMacBaseLineFileName { get; internal set; }
     public List<string> AddinDirectories { get; private set; } = new List<string>();
     public List<string> AddinMPackFileNames { get; private set; } = new List<string>();
     public List<string> AddinMPackDirectories { get; private set; } = new List<string>();
@@ -120,6 +120,11 @@ class CommandLineOptions
         if (string.IsNullOrEmpty(VSMacAppBundle))
         {
             VSMacAppBundle = FindVSMacAppBundle();
+        }
+
+        if (GenerateVSMacBaseLine && VSMacBaseLineFileName is null)
+        {
+            VSMacBaseLineFileName = "vsmac-baseline-report.txt";
         }
 
         VSMacBaseLineFileName = GetFullPath(VSMacBaseLineFileName);

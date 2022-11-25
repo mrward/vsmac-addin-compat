@@ -32,17 +32,18 @@ class AddinCompatChecker : IDisposable
 {
     TemporaryReportFile? reportFile;
 
-    public string? VisualStudioForMacDirectory { get; set; }
+    public string? VSMacDirectory { get; set; }
     public string? AddinDirectory { get; set; }
     public string? ReportFileName { get; set; }
+    public string[]? BaseLine { get; set; }
 
     public bool Check()
     {
-        ArgumentNullException.ThrowIfNull(VisualStudioForMacDirectory);
+        ArgumentNullException.ThrowIfNull(VSMacDirectory);
 
         string? configFile = null;
 
-        IEnumerable<string> allFiles = Checker.GetFiles(VisualStudioForMacDirectory, configFile, out _);
+        IEnumerable<string> allFiles = Checker.GetFiles(VSMacDirectory, configFile, out _);
         IEnumerable<string> startFiles = allFiles;
 
         if (!string.IsNullOrEmpty(AddinDirectory))
@@ -66,10 +67,21 @@ class AddinCompatChecker : IDisposable
         var checker = new Checker();
 
         bool success = checker.Check(
-            VisualStudioForMacDirectory,
+            VSMacDirectory,
             allFiles,
             startFiles,
             ReportFileName);
+
+        if (!success)
+        {
+            Console.WriteLine("Unexpected Checker.Check failure");
+        }
+
+        if (BaseLine is not null)
+        {
+            string[] newBaseLine = GetReportLines();
+            return BaseLineChecker.Check(BaseLine, newBaseLine);
+        }
 
         return success;
     }
@@ -97,15 +109,18 @@ class AddinCompatChecker : IDisposable
         reportFile = null;
     }
 
-    public string GetReportText()
+    public string[] GetReportLines()
     {
-        if (ReportFileName is not null &&
-            File.Exists(ReportFileName))
+        if (ReportFileName is not null)
         {
-            return File.ReadAllText(ReportFileName);
+            if (File.Exists(ReportFileName))
+            {
+                return File.ReadAllLines(ReportFileName);
+            }
+            return Array.Empty<string>();
         }
 
-        return string.Empty;
+        throw new UserException("Report file not set");
     }
 }
 
