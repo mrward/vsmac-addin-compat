@@ -62,7 +62,7 @@ namespace Microsoft.VisualStudioMac.AddinCompatibility
 
             if (appBundlesInApplications.Count() == 1)
             {
-                Console.WriteLine($"Multiple Visual Studio for Mac applications found using '{appBundlePath}'");
+                Console.WriteLine($"Multiple Visual Studio for Mac applications found. Using '{appBundlePath}'");
 
                 return appBundlePath;
             }
@@ -71,13 +71,13 @@ namespace Microsoft.VisualStudioMac.AddinCompatibility
             appBundlePath = GetAppBundlePathForLatestVersion(appBundlePaths);
             if (appBundlePath is not null)
             {
-                Console.WriteLine($"Multiple Visual Studio for Mac applications found using '{appBundlePath}'");
+                Console.WriteLine($"Multiple Visual Studio for Mac applications found. Using '{appBundlePath}'");
                 return appBundlePath;
             }
 
             appBundlePath = appBundlePaths.FirstOrDefault();
 
-            Console.WriteLine($"Could not determine latest Visual Studio for Mac version using '{appBundlePath}'");
+            Console.WriteLine($"Could not determine latest Visual Studio for Mac version. Using '{appBundlePath}'");
 
             return appBundlePath;
         }
