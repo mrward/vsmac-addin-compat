@@ -52,6 +52,9 @@ class VSMacAddinCompactCheckerCommandLine
     static FilePath VisualStudioMacAppBundleDirectory { get; }
 
     public string? AddinDirectory { get; set; }
+    public string? VSMacBaseLineFile { get; set; }
+
+    public bool GenerateVSMacBaseLineFile { get; set; }
 
     public string BuildCommandLine()
     {
@@ -62,8 +65,19 @@ class VSMacAddinCompactCheckerCommandLine
         processArgumentBuilder.Add("--vsmac-app");
         processArgumentBuilder.AddQuoted(VisualStudioMacAppBundleDirectory);
 
-        processArgumentBuilder.Add("--addin-dir");
-        processArgumentBuilder.AddQuoted(AddinDirectory);
+        if (AddinDirectory is not null)
+        {
+            processArgumentBuilder.Add("--addin-dir");
+            processArgumentBuilder.AddQuoted(AddinDirectory);
+        }
+
+        if (GenerateVSMacBaseLineFile)
+        {
+            processArgumentBuilder.Add("--generate-vsmac-baseline");
+        }
+
+        processArgumentBuilder.Add("--vsmac-baseline-file");
+        processArgumentBuilder.AddQuoted(VSMacBaseLineFile);
 
         return processArgumentBuilder.ToString();
     }

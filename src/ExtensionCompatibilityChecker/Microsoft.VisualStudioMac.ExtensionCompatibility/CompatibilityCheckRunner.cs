@@ -56,11 +56,18 @@ class CompatibilityCheckRunner
         var incompatibleAddins = new List<Addin>();
         bool reportFailure = false;
 
+        FilePath baseLineFileName = await GenerateVSMacBaseLine(progressMonitor, wrappedConsole);
+
+        if (baseLineFileName.IsNull)
+        {
+            return;
+        }
+
         foreach (Addin addin in userAddins)
         {
             try
             {
-                int exitCode = await RunCheckAsync(addin, progressMonitor, wrappedConsole);
+                int exitCode = await RunCheckAsync(addin, baseLineFileName, progressMonitor, wrappedConsole);
                 if (exitCode == 1)
                 {
                     incompatibleAddins.Add(addin);
@@ -80,6 +87,8 @@ class CompatibilityCheckRunner
                 LoggingService.LogError("Unable to run addin compat check", ex);
             }
         }
+
+        SafeRemoveVSMacBaseLineReport(baseLineFileName);
 
         string? errorMessage = null;
         if (incompatibleAddins.Count > 0)
@@ -131,19 +140,44 @@ class CompatibilityCheckRunner
             true);
     }
 
-    async Task<int> RunCheckAsync(
-        Addin addin,
+    async Task<FilePath> GenerateVSMacBaseLine(
         OutputProgressMonitor progressMonitor,
         OperationConsole console)
     {
-        string? directory = Path.GetDirectoryName(addin.AddinFile);
+        var commandLine = new VSMacAddinCompactCheckerCommandLine();
+        commandLine.GenerateVSMacBaseLineFile = true;
+        commandLine.VSMacBaseLineFile = Path.Combine(FileService.CreateTempDirectory(), "vsmac-baseline.txt");
 
+        int exitCode = await RunCheckAsync(commandLine, console);
+        if (exitCode != 0)
+        {
+            string message = GettextCatalog.GetString("Unable to generate baseline");
+            progressMonitor.Log.WriteLine(message);
+
+            return FilePath.Null;
+        }
+
+        return commandLine.VSMacBaseLineFile;
+    }
+
+    Task<int> RunCheckAsync(
+        Addin addin,
+        FilePath baseLineFileName,
+        OutputProgressMonitor progressMonitor,
+        OperationConsole console)
+    {
         string message = GettextCatalog.GetString("========== Checking extension {0} {1} ==========", addin.Name, addin.Version);
         progressMonitor.Log.WriteLine(message);
 
         var commandLine = new VSMacAddinCompactCheckerCommandLine();
-        commandLine.AddinDirectory = directory;
+        commandLine.AddinDirectory = Path.GetDirectoryName(addin.AddinFile);
+        commandLine.VSMacBaseLineFile = baseLineFileName;
 
+        return RunCheckAsync(commandLine, console);
+    }
+
+    async Task<int> RunCheckAsync(VSMacAddinCompactCheckerCommandLine commandLine, OperationConsole console)
+    {
         string arguments = commandLine.BuildCommandLine();
 
         ProcessAsyncOperation operation = Runtime.ProcessService.StartConsoleProcess(
@@ -175,6 +209,24 @@ class CompatibilityCheckRunner
         }
 
         return builder.ToStringAndFree();
+    }
+
+    static void SafeRemoveVSMacBaseLineReport(FilePath baseLineFileName)
+    {
+        FilePath directory = baseLineFileName.ParentDirectory;
+        if (directory.IsNullOrEmpty)
+        {
+            return;
+        }
+
+        try
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+        catch (Exception ex)
+        {
+            LoggingService.LogError("Could not remove baseline report directory", ex);
+        }
     }
 }
 
