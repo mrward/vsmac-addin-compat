@@ -31,6 +31,7 @@ class Program
     static CommandLineOptions? options;
     static int FailedCount;
     static string[]? baseLine;
+    static TemporaryReportFile? vsmacBinaryCompatConfigFile;
 
     static int Main(string[] args)
     {
@@ -65,6 +66,10 @@ class Program
 
     static int Run()
     {
+        vsmacBinaryCompatConfigFile = CreateVSMacBinaryCompatConfigFile();
+
+        using TemporaryReportFile configFile = vsmacBinaryCompatConfigFile;
+
         if (options!.GenerateVSMacBaseLine)
         {
             GenerateVSMacBaseLine(options.VSMacBaseLineFileName);
@@ -100,6 +105,18 @@ class Program
         return 0;
     }
 
+    static TemporaryReportFile CreateVSMacBinaryCompatConfigFile()
+    {
+        var configFile = new TemporaryReportFile();
+
+        vsmacBinaryCompatConfigFile = configFile;
+
+        string contents = GetVSMacBinaryCompatConfig();
+        File.WriteAllText(configFile.FileName, contents);
+
+        return configFile;
+    }
+
     static void GenerateVSMacBaseLine()
     {
         using var vsmacBaseLineFileName = new TemporaryReportFile();
@@ -114,6 +131,7 @@ class Program
         using var checker = new AddinCompatChecker();
         checker.VSMacDirectory = options!.VSMacAppBundle;
         checker.ReportFileName = options.VSMacBaseLineFileName;
+        checker.VSMacCompatConfigFile = vsmacBinaryCompatConfigFile!.FileName;
 
         checker.Check();
 
@@ -121,6 +139,22 @@ class Program
 
         Console.WriteLine("Baseline generated");
         Console.WriteLine();
+    }
+
+    static string GetVSMacBinaryCompatConfig()
+    {
+        Stream? stream = typeof(Program).Assembly.GetManifestResourceStream("VSMacBinaryCompatConfig.txt");
+        if (stream is null)
+        {
+            return string.Empty;
+        }
+
+        using (stream)
+        {
+            using var streamReader = new StreamReader(stream);
+
+            return streamReader.ReadToEnd();
+        }
     }
 
     static void CheckAddinDirectoryCompat(string addinDirectory)
@@ -150,6 +184,7 @@ class Program
         checker.AddinDirectory = addinDirectory;
         checker.VSMacDirectory = options!.VSMacAppBundle;
         checker.BaseLine = baseLine;
+        checker.VSMacCompatConfigFile = vsmacBinaryCompatConfigFile!.FileName;
 
         bool result = checker.Check();
 

@@ -20,4 +20,9 @@
     <Reference Include="BinaryCompatChecker" HintPath="$(PkgBinaryCompatChecker)\tools\BinaryCompatChecker.dll" />
     <Reference Include="Mono.Cecil" HintPath="$(PkgBinaryCompatChecker)\tools\Mono.Cecil.dll" />
   </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\VSMacBinaryCompatConfig.txt">
+      <LogicalName>VSMacBinaryCompatConfig.txt</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
 </Project>

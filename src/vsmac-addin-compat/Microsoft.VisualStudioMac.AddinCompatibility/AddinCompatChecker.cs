@@ -33,6 +33,7 @@ class AddinCompatChecker : IDisposable
     TemporaryReportFile? reportFile;
 
     public string? VSMacDirectory { get; set; }
+    public string? VSMacCompatConfigFile { get; set; }
     public string? AddinDirectory { get; set; }
     public string? ReportFileName { get; set; }
     public string[]? BaseLine { get; set; }
@@ -41,17 +42,15 @@ class AddinCompatChecker : IDisposable
     {
         ArgumentNullException.ThrowIfNull(VSMacDirectory);
 
-        string? configFile = null;
-
-        IEnumerable<string> allFiles = Checker.GetFiles(VSMacDirectory, configFile, out _);
+        IEnumerable<string> allFiles = Checker.GetFiles(VSMacDirectory, VSMacCompatConfigFile, out _);
         IEnumerable<string> startFiles = allFiles;
 
         if (!string.IsNullOrEmpty(AddinDirectory))
         {
             IEnumerable<string> allAddinFiles = Checker.GetFiles(
                 AddinDirectory,
-                configFile,
-                out List<string>? addinStartFiles);
+                configFilePath: null,
+                startFiles: out List<string>? addinStartFiles);
 
             allFiles = allFiles.Concat(allAddinFiles);
             startFiles = allAddinFiles;
