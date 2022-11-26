@@ -1,5 +1,5 @@
 ﻿//
-// TemporaryReportFile.cs
+// TemporaryFile.cs
 //
 // Author:
 //       Matt Ward <matt.ward@microsoft.com>
@@ -26,15 +26,15 @@
 
 namespace Microsoft.VisualStudioMac.AddinCompatibility;
 
-class TemporaryReportFile : IDisposable
+class TemporaryFile : IDisposable
 {
     readonly string directory;
 
-    public TemporaryReportFile()
+    public TemporaryFile(string name = "report.txt")
     {
         directory = CreateTempDirectory();
 
-        FileName = Path.Combine(directory, "report.txt");
+        FileName = Path.Combine(directory, name);
     }
 
     public string FileName { get; }

@@ -31,7 +31,7 @@ class Program
     static CommandLineOptions? options;
     static int FailedCount;
     static string[]? baseLine;
-    static TemporaryReportFile? vsmacBinaryCompatConfigFile;
+    static TemporaryFile? vsmacBinaryCompatConfigFile;
 
     static int Main(string[] args)
     {
@@ -68,7 +68,7 @@ class Program
     {
         vsmacBinaryCompatConfigFile = CreateVSMacBinaryCompatConfigFile();
 
-        using TemporaryReportFile configFile = vsmacBinaryCompatConfigFile;
+        using TemporaryFile configFile = vsmacBinaryCompatConfigFile;
 
         if (options!.GenerateVSMacBaseLine)
         {
@@ -105,9 +105,9 @@ class Program
         return 0;
     }
 
-    static TemporaryReportFile CreateVSMacBinaryCompatConfigFile()
+    static TemporaryFile CreateVSMacBinaryCompatConfigFile()
     {
-        var configFile = new TemporaryReportFile();
+        var configFile = new TemporaryFile("config.txt");
 
         vsmacBinaryCompatConfigFile = configFile;
 
@@ -119,7 +119,7 @@ class Program
 
     static void GenerateVSMacBaseLine()
     {
-        using var vsmacBaseLineFileName = new TemporaryReportFile();
+        using var vsmacBaseLineFileName = new TemporaryFile();
 
         GenerateVSMacBaseLine(vsmacBaseLineFileName.FileName);
     }

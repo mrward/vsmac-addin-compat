@@ -30,7 +30,7 @@ namespace Microsoft.VisualStudioMac.AddinCompatibility;
 
 class AddinCompatChecker : IDisposable
 {
-    TemporaryReportFile? reportFile;
+    TemporaryFile? reportFile;
 
     public string? VSMacDirectory { get; set; }
     public string? VSMacCompatConfigFile { get; set; }
@@ -89,7 +89,7 @@ class AddinCompatChecker : IDisposable
     {
         if (string.IsNullOrEmpty(ReportFileName))
         {
-            reportFile = new TemporaryReportFile();
+            reportFile = new TemporaryFile();
             ReportFileName = reportFile.FileName;
         }
         else
