@@ -208,7 +208,8 @@ class CompatibilityCheckRunner
             builder.AppendLine($"    {addin.Name} {addin.Version}");
         }
 
-        return builder.ToStringAndFree();
+        string fullMessage = builder;
+        return fullMessage;
     }
 
     static void SafeRemoveVSMacBaseLineReport(FilePath baseLineFileName)
