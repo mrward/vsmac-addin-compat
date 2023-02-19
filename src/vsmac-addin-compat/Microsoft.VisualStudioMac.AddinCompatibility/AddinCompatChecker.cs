@@ -36,6 +36,8 @@ class AddinCompatChecker : IDisposable
     public string? VSMacCompatConfigFile { get; set; }
     public string? AddinDirectory { get; set; }
     public string? ReportFileName { get; set; }
+    public string? DiffOutputReportFileName { get; set; }
+    public string? DiffIgnoreFileName { get; set; }
     public string[]? BaseLine { get; set; }
 
     public bool Check()
@@ -79,7 +81,13 @@ class AddinCompatChecker : IDisposable
         if (BaseLine is not null)
         {
             string[] newBaseLine = GetReportLines();
-            return BaseLineChecker.Check(BaseLine, newBaseLine);
+            string[] ignoreDiffLines = GetDiffIgnoreLines();
+
+            var baseLineChecker = new BaseLineChecker();
+            baseLineChecker.CompatDiffOutputReportFileName = DiffOutputReportFileName;
+            baseLineChecker.IgnoreDiffLines = ignoreDiffLines;
+
+            return baseLineChecker.Check(BaseLine, newBaseLine);
         }
 
         return success;
@@ -120,6 +128,23 @@ class AddinCompatChecker : IDisposable
         }
 
         throw new UserException("Report file not set");
+    }
+
+    string[] GetDiffIgnoreLines()
+    {
+        if (DiffIgnoreFileName is not null)
+        {
+            if (File.Exists(DiffIgnoreFileName))
+            {
+                return File.ReadAllLines(DiffIgnoreFileName);
+            }
+            else
+            {
+                Console.WriteLine("Diff ignore filename does not exist '{0}", DiffIgnoreFileName);
+            }
+        }
+
+       return Array.Empty<string>();
     }
 }
 

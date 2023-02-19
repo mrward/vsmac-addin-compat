@@ -29,9 +29,12 @@ using System;
 
 namespace Microsoft.VisualStudioMac.AddinCompatibility;
 
-static class BaseLineChecker
+class BaseLineChecker
 {
-    public static bool Check(string[] oldBaseLine, string[] newBaseLine)
+    public string? CompatDiffOutputReportFileName { get; set; }
+    public string[] IgnoreDiffLines { get; set; } = Array.Empty<string>();
+
+    public bool Check(string[] oldBaseLine, string[] newBaseLine)
     {
         if (!newBaseLine.Any())
         {
@@ -43,7 +46,36 @@ static class BaseLineChecker
             return true;
         }
 
-        return OutputDiff(oldBaseLine, newBaseLine);
+        IEnumerable<string> added = newBaseLine.Except(oldBaseLine);
+
+        if (added.Any())
+        {
+            CreateDiffReport(added);
+        }
+
+        IEnumerable<string> removed = Array.Empty<string>();
+
+        if (IgnoreDiffLines.Any())
+        {
+            removed = IgnoreDiffLines.Except(added);
+            added = added.Except(IgnoreDiffLines);
+        }
+
+        if (added.Any() || removed.Any())
+        {
+            ReportBaseLineErrorsToConsole(added, removed);
+            return false;
+        }
+
+        return true;
+    }
+
+    void CreateDiffReport(IEnumerable<string> added)
+    {
+        if (CompatDiffOutputReportFileName is not null)
+        {
+            File.WriteAllLines(CompatDiffOutputReportFileName, added);
+        }
     }
 
     static void OutputError(string text)
@@ -51,27 +83,35 @@ static class BaseLineChecker
         Console.Error.WriteLine(text);
     }
 
-    static bool OutputDiff(IEnumerable<string> oldBaseLine, IEnumerable<string> newBaseLine)
+    static void ReportBaseLineErrorsToConsole(IEnumerable<string> added, IEnumerable<string> removed)
     {
-        IEnumerable<string> added = newBaseLine.Except(oldBaseLine);
+        OutputError("The current assembly binary compatibility report is different from the baseline.");
+
+        if (removed.Any())
+        {
+            OutputError("=================================");
+            OutputError("These expected lines are missing:");
+
+            foreach (var removedLine in removed)
+            {
+                OutputError(removedLine);
+            }
+
+            OutputError("=================================");
+        }
 
         if (added.Any())
         {
-            OutputError("The current assembly binary compatibility report is different from the baseline.");
-
             OutputError("=================================");
             OutputError("These actual lines are new:");
+
             foreach (var addedLine in added)
             {
                 OutputError(addedLine);
             }
 
             OutputError("=================================");
-
-            return false;
         }
-
-        return true;
     }
 }
 

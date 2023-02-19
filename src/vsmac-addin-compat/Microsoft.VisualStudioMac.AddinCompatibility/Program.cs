@@ -185,6 +185,8 @@ class Program
         checker.VSMacDirectory = options!.VSMacAppBundle;
         checker.BaseLine = baseLine;
         checker.VSMacCompatConfigFile = vsmacBinaryCompatConfigFile!.FileName;
+        checker.DiffOutputReportFileName = options.CompatDiffOutputFileName;
+        checker.DiffIgnoreFileName = options.CompatDiffIgnoreFileName;
 
         bool result = checker.Check();
 
