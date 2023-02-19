@@ -39,6 +39,11 @@ class CompatibilityCheckRunner
 {
     public async Task RunCheckAsync()
     {
+        await Runtime.MainTaskScheduler;
+
+        // Ensure pad is created and available.
+        ExtensionCompatibilityConsolePad.Initialize();
+
         await TaskScheduler.Default;
 
         List<Addin> userAddins = GetUserAddins();
@@ -48,10 +53,11 @@ class CompatibilityCheckRunner
             return;
         }
 
-        using OutputProgressMonitor progressMonitor = CreateProgressMonitor();
-        using OperationConsole console = progressMonitor.Console;
+        OutputProgressMonitor progressMonitor = GetProgressMonitor();
 
-        var wrappedConsole = new CompatibilityCheckOperationConsole(console);
+        progressMonitor.Log.WriteLine(GettextCatalog.GetString("Checking extension compatibility…"));
+
+        var wrappedConsole = new CompatibilityCheckOperationConsole(progressMonitor.Console);
 
         var incompatibleAddins = new List<Addin>();
         bool reportFailure = false;
@@ -63,14 +69,27 @@ class CompatibilityCheckRunner
             return;
         }
 
+        FilePath diffOutputDirectory = FileService.CreateTempDirectory();
+
         foreach (Addin addin in userAddins)
         {
             try
             {
-                int exitCode = await RunCheckAsync(addin, baseLineFileName, progressMonitor, wrappedConsole);
+                FilePath diffOutputFileName = diffOutputDirectory.Combine($"{addin.LocalId}-diff.txt");
+                FilePath diffIgnoreFileName = CompatibilityBaselineDiffProvider.GetExistingDiffFileName(addin);
+
+                int exitCode = await RunCheckAsync(
+                    addin,
+                    baseLineFileName,
+                    diffIgnoreFileName,
+                    diffOutputFileName,
+                    progressMonitor,
+                    wrappedConsole);
+
                 if (exitCode == 1)
                 {
                     incompatibleAddins.Add(addin);
+                    CompatibilityBaselineDiffProvider.AddTemporaryDiffFile(addin, diffOutputFileName);
                 }
                 else if (exitCode == 0)
                 {
@@ -105,12 +124,21 @@ class CompatibilityCheckRunner
             progressMonitor.Log.WriteLine(errorMessage);
 
             await Runtime.MainTaskScheduler;
+            ExtensionCompatibilityConsolePad.IsResetBaselineButtonEnabled = true;
 
-            Pad pad = IdeApp.Workbench.ProgressMonitors.GetPadForMonitor(progressMonitor);
+            Pad pad = IdeApp.Workbench.GetPad<ExtensionCompatibilityConsolePad>();
             if (pad is not null)
             {
                 pad.BringToFront();
+                ExtensionCompatibilityConsolePad.IsSaveBaselineButtonEnabled = true;
             }
+        }
+        else
+        {
+            await Runtime.MainTaskScheduler;
+            ExtensionCompatibilityConsolePad.IsResetBaselineButtonEnabled = true;
+
+            progressMonitor.Log.WriteLine(GettextCatalog.GetString("All extensions are compatible"));
         }
     }
 
@@ -130,14 +158,9 @@ class CompatibilityCheckRunner
         return string.Compare(x.Name, y.Name, StringComparison.OrdinalIgnoreCase);
     }
 
-    static OutputProgressMonitor CreateProgressMonitor()
+    static OutputProgressMonitor GetProgressMonitor()
     {
-        return IdeApp.Workbench.ProgressMonitors.GetOutputProgressMonitor(
-            "CompatibilityCheckRunnerConsole",
-            GettextCatalog.GetString("Extension Compatibility Console"),
-            Stock.Console,
-            false,
-            true);
+        return ExtensionCompatibilityConsolePad.LogView!.GetProgressMonitor();
     }
 
     async Task<FilePath> GenerateVSMacBaseLine(
@@ -163,6 +186,8 @@ class CompatibilityCheckRunner
     Task<int> RunCheckAsync(
         Addin addin,
         FilePath baseLineFileName,
+        FilePath compatDiffIgnoreFileName,
+        FilePath compatDiffOutputFileName,
         OutputProgressMonitor progressMonitor,
         OperationConsole console)
     {
@@ -172,6 +197,8 @@ class CompatibilityCheckRunner
         var commandLine = new VSMacAddinCompactCheckerCommandLine();
         commandLine.AddinDirectory = Path.GetDirectoryName(addin.AddinFile);
         commandLine.VSMacBaseLineFile = baseLineFileName;
+        commandLine.CompatDiffIgnoreFile = compatDiffIgnoreFileName;
+        commandLine.CompatDiffOutputFile = compatDiffOutputFileName;
 
         return RunCheckAsync(commandLine, console);
     }

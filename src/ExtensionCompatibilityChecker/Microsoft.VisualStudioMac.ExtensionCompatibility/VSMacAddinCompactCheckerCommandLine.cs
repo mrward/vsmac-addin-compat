@@ -56,6 +56,9 @@ class VSMacAddinCompactCheckerCommandLine
 
     public bool GenerateVSMacBaseLineFile { get; set; }
 
+    public FilePath CompatDiffIgnoreFile { get; set; }
+    public FilePath CompatDiffOutputFile { get; set; }
+
     public string BuildCommandLine()
     {
         var processArgumentBuilder = new ProcessArgumentBuilder();
@@ -78,6 +81,18 @@ class VSMacAddinCompactCheckerCommandLine
 
         processArgumentBuilder.Add("--vsmac-baseline-file");
         processArgumentBuilder.AddQuoted(VSMacBaseLineFile);
+
+        if (CompatDiffIgnoreFile.IsNotNull)
+        {
+            processArgumentBuilder.Add("--compat-diff-ignore-file");
+            processArgumentBuilder.AddQuoted(CompatDiffIgnoreFile);
+        }
+
+        if (CompatDiffOutputFile.IsNotNull)
+        {
+            processArgumentBuilder.Add("--compat-diff-output-file");
+            processArgumentBuilder.AddQuoted(CompatDiffOutputFile);
+        }
 
         return processArgumentBuilder.ToString();
     }
