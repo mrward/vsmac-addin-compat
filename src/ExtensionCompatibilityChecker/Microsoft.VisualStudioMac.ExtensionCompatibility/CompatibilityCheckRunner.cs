@@ -37,12 +37,32 @@ namespace Microsoft.VisualStudioMac.ExtensionCompatibility;
 
 class CompatibilityCheckRunner
 {
-    public async Task RunCheckAsync()
+    public async Task RunCheckAsync(bool reportNoUserAddinsInstalled = false)
     {
-        await Runtime.MainTaskScheduler;
+        try
+        {
+            await Runtime.MainTaskScheduler;
 
-        // Ensure pad is created and available.
-        ExtensionCompatibilityConsolePad.Initialize();
+            // Ensure pad is created and available.
+            ExtensionCompatibilityConsolePad.Initialize();
+            ExtensionCompatibilityConsolePad.IsResetBaselineButtonEnabled = false;
+            ExtensionCompatibilityConsolePad.IsSaveBaselineButtonEnabled = false;
+            ExtensionCompatibilityConsolePad.IsRunCheckButtonEnabled = false;
+
+            await RunCheckInternalAsync(reportNoUserAddinsInstalled);
+        }
+        finally
+        {
+            Runtime.RunInMainThread(() =>
+            {
+                ExtensionCompatibilityConsolePad.IsRunCheckButtonEnabled = true;
+            }).Ignore();
+        }
+    }
+
+    async Task RunCheckInternalAsync(bool reportNoUserAddinsInstalled = false)
+    {
+        OutputProgressMonitor? progressMonitor;
 
         await TaskScheduler.Default;
 
@@ -50,10 +70,16 @@ class CompatibilityCheckRunner
 
         if (!userAddins.Any())
         {
+            if (reportNoUserAddinsInstalled)
+            {
+                progressMonitor = GetProgressMonitor();
+                progressMonitor.Log.WriteLine(GettextCatalog.GetString("No custom extensions installed"));
+            }
+
             return;
         }
 
-        OutputProgressMonitor progressMonitor = GetProgressMonitor();
+        progressMonitor = GetProgressMonitor();
 
         progressMonitor.Log.WriteLine(GettextCatalog.GetString("Checking extension compatibility…"));
 
@@ -194,6 +220,12 @@ class CompatibilityCheckRunner
         string message = GettextCatalog.GetString("========== Checking extension {0} {1} ==========", addin.Name, addin.Version);
         progressMonitor.Log.WriteLine(message);
 
+        if (compatDiffIgnoreFileName.IsNotNull)
+        {
+            string fileName = FormatFileName(compatDiffIgnoreFileName);
+            progressMonitor.Log.WriteLine(GettextCatalog.GetString("Using saved baseline '{0}'", fileName));
+        }
+
         var commandLine = new VSMacAddinCompactCheckerCommandLine();
         commandLine.AddinDirectory = Path.GetDirectoryName(addin.AddinFile);
         commandLine.VSMacBaseLineFile = baseLineFileName;
@@ -255,6 +287,17 @@ class CompatibilityCheckRunner
         {
             LoggingService.LogError("Could not remove baseline report directory", ex);
         }
+    }
+
+    static string FormatFileName(FilePath fileName)
+    {
+        FilePath homeFolder = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
+        if (fileName.IsChildPathOf(homeFolder))
+        {
+            string name = FileService.AbsoluteToRelativePath(homeFolder, fileName);
+            return "~/" + name;
+        }
+        return fileName;
     }
 }
 

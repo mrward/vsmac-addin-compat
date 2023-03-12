@@ -24,7 +24,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-using System;
 using AppKit;
 using MonoDevelop.Components;
 using MonoDevelop.Components.Declarative;
@@ -43,9 +42,11 @@ namespace Microsoft.VisualStudioMac.ExtensionCompatibility
         static LogViewController? logViewController;
         static bool isSaveBaselineButtonEnabled;
         static bool isResetBaselineButtonEnabled;
+        static bool isRunCheckButtonEnabled;
 
         static ToolbarButtonItem? saveBaselineButton;
         static ToolbarButtonItem? resetBaselineButton;
+        static ToolbarButtonItem? runCheckButton;
 
         public static void Initialize()
         {
@@ -57,6 +58,14 @@ namespace Microsoft.VisualStudioMac.ExtensionCompatibility
         protected override void Initialize(IPadWindow window)
         {
             var toolbar = new Toolbar();
+
+            runCheckButton = new ToolbarButtonItem(toolbar.Properties, nameof(runCheckButton));
+            runCheckButton.Clicked += RunCheckButtonClick;
+            runCheckButton.Icon = MonoDevelop.Ide.Gui.Stock.RunProgramIcon;
+            runCheckButton.Tooltip = GettextCatalog.GetString("Run compatibility check");
+            runCheckButton.Enabled = isRunCheckButtonEnabled;
+
+            toolbar.AddItem(runCheckButton);
 
             saveBaselineButton = new ToolbarButtonItem(toolbar.Properties, nameof(saveBaselineButton));
             saveBaselineButton.Clicked += SaveBaselineButtonClick;
@@ -99,6 +108,19 @@ namespace Microsoft.VisualStudioMac.ExtensionCompatibility
             }
         }
 
+        public static bool IsRunCheckButtonEnabled
+        {
+            get { return isRunCheckButtonEnabled; }
+            set
+            {
+                isRunCheckButtonEnabled = value;
+                if (runCheckButton is not null)
+                {
+                    runCheckButton.Enabled = value;
+                }
+            }
+        }
+
         public override Control Control
         {
             get { return logView; }
@@ -131,6 +153,15 @@ namespace Microsoft.VisualStudioMac.ExtensionCompatibility
             {
                 MessageService.ShowError(GettextCatalog.GetString("Could not save baselines"), ex);
             }
+        }
+
+        void RunCheckButtonClick(object? sender, EventArgs e)
+        {
+            LogView!.Clear();
+
+            var runner = new CompatibilityCheckRunner();
+            runner.RunCheckAsync(reportNoUserAddinsInstalled: true)
+                .Ignore();
         }
 
         static void CreateLogView()
