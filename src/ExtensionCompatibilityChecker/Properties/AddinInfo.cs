@@ -29,7 +29,7 @@ using Mono.Addins;
 
 [assembly:Addin("ExtensionCompatibilityChecker",
                 Namespace = "Microsoft.VisualStudioMac",
-                Version = "0.1",
+                Version = "0.2",
                 Category = "IDE extensions")]
 
 [assembly:AddinName("Extension Compatibility Checker")]
