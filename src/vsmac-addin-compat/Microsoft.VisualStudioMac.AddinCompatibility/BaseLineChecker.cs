@@ -25,8 +25,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-using System;
-
 namespace Microsoft.VisualStudioMac.AddinCompatibility;
 
 class BaseLineChecker
@@ -36,16 +34,6 @@ class BaseLineChecker
 
     public bool Check(string[] oldBaseLine, string[] newBaseLine)
     {
-        if (!newBaseLine.Any())
-        {
-            return true;
-        }
-
-        if (Enumerable.SequenceEqual(oldBaseLine, newBaseLine))
-        {
-            return true;
-        }
-
         IEnumerable<string> added = newBaseLine.Except(oldBaseLine);
 
         if (added.Any())
